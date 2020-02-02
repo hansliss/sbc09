@@ -102,9 +102,9 @@ ramstart	equ $400	;first free RAM address.
 ramtop  	equ $8000       ;top of RAM.
 
 * I/O port addresses
-aciactl		equ $e000	;Control port of ACIA
-aciasta		equ $e000	;Status port of ACIA
-aciadat		equ $e001	;Data port of ACIA
+aciactl		equ $a000	;Control port of ACIA
+aciasta		equ $a000	;Status port of ACIA
+aciadat		equ $a001	;Data port of ACIA
 
 * ASCII control characters.
 SOH		equ 1
@@ -165,9 +165,8 @@ blockmove	lda ,x+
 		rts
 
 * Initialize serial communications port, buffers, interrupts.
-initacia	ldb #$03
+initacia	ldb #$95
 		stb aciactl
-		ldb #%00110101
 		rts
 
 * O.S. routine to read a character into B register.
@@ -1069,10 +1068,10 @@ startsrch	tsta		;Start searching, start addr in Y,
 		sta temp3+1
 srchloop	tfr y,x
 		lda temp3+1
-		cmpx #$e100
+		cmpx #$a100
 		bcc srch1
 		leax a,x
-		cmpx #$e000	;Stop at I/O addresses.
+		cmpx #$a000	;Stop at I/O addresses.
 		lbcc cmdline
 srch1		tfr y,x
 		ldu #linebuf
