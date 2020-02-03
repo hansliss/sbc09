@@ -59,7 +59,10 @@ void read_image()
     perror("v09, image file");
     exit(2);
  }
- fread(mem+0x8000,0x8000,1,image);
+ if (fread(mem+0x8000,0x8000,1,image) != 1) {
+   perror("fread()");
+   exit(-1);
+ }
  fclose(image);
 }
 

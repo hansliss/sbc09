@@ -1195,27 +1195,40 @@ void processline()
  loccounter+=codeptr;
 }
 
-void suppressline()
-{
- struct oprecord * op;
- srcptr=srcline;
- oldlc=loccounter;
- codeptr=0;
- if(isalnum(*srcptr)) {
-  scanname();
-  if(*srcptr==':')srcptr++;
- }
- skipspace();
- scanname();op=findop(namebuf);
- if(op && op->cat==13) {
-  if(op->code==10) ifcount++;
-  else if(op->code==3) {
-   if(ifcount>0)ifcount--;else if(suppress==1|suppress==2)suppress=0;
-  } else if(op->code==1) {
-   if(ifcount==0 && suppress==2)suppress=0;
+void suppressline() {
+  struct oprecord * op;
+  srcptr = srcline;
+  oldlc = loccounter;
+  codeptr = 0;
+  if (isalnum(*srcptr)) {
+    scanname();
+    if (*srcptr == ':') {
+      srcptr++;
+    }
   }
- }  
- if(pass==2&&listing)outlist();
+  skipspace();
+  scanname();
+  op = findop(namebuf);
+  if (op && op->cat==13) {
+    if (op->code == 10) {
+      ifcount++;
+    } else if(op->code==3) {
+      if (ifcount>0) {
+	ifcount--;
+      } else if((suppress==1) || (suppress==2)) {
+	suppress=0;
+      }
+    } else {
+      if (op->code == 1) {
+	if (ifcount == 0 && suppress == 2) {
+	  suppress=0;
+	}
+      }
+    }
+  }  
+  if (pass == 2 && listing) {
+    outlist();
+  }
 }
 
 void usage(char*nm)

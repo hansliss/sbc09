@@ -217,8 +217,7 @@ void do_escape(void) {
 	char s[80];
 	restore_term();
 	printf("v09>");
-	fgets(s, 80, stdin);
-	if (s[0])
+	if (fgets(s, 80, stdin) && s[0])
 		s[strlen(s) - 1] = 0;
 	switch (toupper(s[0])) {
 	case 'L':

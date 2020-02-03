@@ -29,7 +29,7 @@ engine volatile int tracing,attention,escape,irq;
 engine Word tracehi,tracelo;
 engine char escchar;
 
-#define IOPAGE 0xe000
+#define IOPAGE 0xa000
 
 void interpr(void);
 void do_exit(void);
