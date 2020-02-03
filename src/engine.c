@@ -193,7 +193,7 @@ static int tracetrick=0;
     switch(reg) {						\
     case 0: val=GETDREG; break;					\
     case 1: val=ixreg; break;					\
-    case 2: val=iyreg; break;					\
+    case 2: val=iyreg; break; \
     case 3: val=iureg; break;					\
     case 4: val=isreg; break;					\
     case 5: val=ipcreg; break;					\
@@ -798,22 +798,22 @@ void interpr(void) {
       IMMBYTE(tb);
       {
 	Word t2;
-	GETREG(tw,tb>>4);
-	GETREG(t2,tb&15);
-	if ((tb & 0x70) == 0x20 || (tb & 0x70) == 0x30) { /* first op is CC or DP */
+	GETREG(tw, tb >> 4);
+	GETREG(t2, tb & 15);
+	if ((tb & 0xF0) == 0xA0 || (tb & 0xF0) == 0xB0) { /* first op is CC or DP */
 	  tw = ((tw & 0xff) << 8) | (tw & 0xff); /* high and low byte the same */
 	}
-	SETREG(t2,tb>>4);
-	SETREG(tw,tb&15);
-      } 
+	SETREG(t2, tb >> 4);
+	SETREG(tw, tb & 15);
+      }
       break;
    case 0x1F: /* TFR */
      IMMBYTE(tb);
-     GETREG(tw,tb>>4);
-     if ((tb & 0x70) == 0x20 || (tb & 0x70) == 0x30) { /* source is CC or DP */
+     GETREG(tw, tb >> 4);
+     if ((tb & 0xF0) == 0xA0 || (tb & 0xF0) == 0xB0) { /* source is CC or DP */
        tw = ((tw & 0xff) << 8) | (tw & 0xff); /* high and low byte the same */
      }
-     SETREG(tw,tb&15);
+     SETREG(tw, tb & 15);
      break;
     case 0x20: /* (L)BRA*/
       BRANCH(1);
