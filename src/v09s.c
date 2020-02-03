@@ -387,6 +387,7 @@ Byte * eaddr0() /* effective address for NEG..JMP as byte pointer */
   case 6: da_inst_cat(NULL,2); return mem+postbyte();
   case 7: return mem+direct();
  }
+ return 0;
 }
 
 Word eaddr8()  /* effective address for 8-bits ops. */
@@ -398,6 +399,7 @@ Word eaddr8()  /* effective address for 8-bits ops. */
   case 2: da_inst_cat(NULL,2); return postbyte();
   case 3: return direct();
  }
+ return 0;
 }
 
 Word eaddr16() /* effective address for 16-bits ops. */
@@ -409,6 +411,7 @@ Word eaddr16() /* effective address for 16-bits ops. */
   case 2: da_inst_cat(NULL,1); return postbyte();
   case 3: da_inst_cat(NULL,-1); return direct();
  }
+ return 0;
 }
 
 void ill() /* illegal opcode==noop */
@@ -1504,7 +1507,8 @@ void trace()
 
   if (
    1 ||                                         /* no trace filtering ... */
-   !(ureg > 0x09c0 && ureg < 0x09f3) && (       /* CMOVE ausblenden! */
+   (!(ureg > 0x09c0) && (ureg < 0x09f3) &&       /* CMOVE ausblenden! */
+   (
     pcreg_prev == 0x01de || /* DOLST */
     pcreg_prev == 0x037a || /* FDOVAR */
   /*
@@ -1516,7 +1520,7 @@ void trace()
     pcreg_prev >= 0x01de && pcreg_prev < 0x0300 ||
    */
     0
-    )
+    ))
    )
   {
    fprintf(stderr,"%04x ",pcreg_prev);
@@ -1548,7 +1552,7 @@ void trace()
 
 static char optstring[]="d";
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
  char c;
  int a;

@@ -620,10 +620,21 @@ void scanindexed()
  postbyte=0;
  if(scanindexreg()) {
    srcptr++;
-   if(opsize==0)if(unknown||!certain)opsize=3;
-                else if(operand>=-16&&operand<16&&mode==3)opsize=1;
-                else if(operand>=-128&&operand<128)opsize=2;
-                else opsize=3;
+   if(opsize==0) {
+     if(unknown||!certain) {
+       opsize=3;
+     } else {
+       if(operand>=-16&&operand<16&&mode==3) {
+	 opsize=1;
+       } else {
+	 if(operand>=-128&&operand<128) {
+	   opsize=2;
+	 } else {
+	   opsize=3;
+	 }
+       }
+     }
+   }
    switch(opsize) {
    case 1:postbyte+=(operand&31);opsize=0;break;
    case 2:postbyte+=0x88;break;
@@ -648,7 +659,7 @@ void scanindexed()
 
 void scanoperands()
 {
- char c,d,*oldsrcptr;
+ char c,*oldsrcptr;
  unknown=0;
  opsize=0;
  certain=1;
@@ -1295,7 +1306,7 @@ void processfile(char *name)
  strcpy(curname,oldname);
 }
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
  char c;
  getoptions(argc,argv);

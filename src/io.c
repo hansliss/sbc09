@@ -80,7 +80,8 @@ int char_input(void) {
 				acknak = 6;
 			}
 		} else {
-			if (acknak == 21 && rcvdnak == 21 || acknak == 6 && rcvdnak == 6) {
+		  if ((acknak == 21 && rcvdnak == 21) ||
+		      (acknak == 6 && rcvdnak == 6)) {
 				rcvdnak = 0;
 				memset(xmbuf, 0, 132);
 				w = fread(xmbuf + 3, 1, 128, xfile);
@@ -131,13 +132,13 @@ int char_input(void) {
 }
 
 int do_input(int a) {
-	static int c, f = EOF;
+  static int c, f = EOF, rval=-1;
 	if (a == 0) {
 		if (f == EOF)
 			f = char_input();
 		if (f != EOF)
 			c = f;
-		return 2 + (f != EOF);
+		rval = 2 + (f != EOF);
 	} else if (a == 1) { /*data port*/
 		if (f == EOF)
 			f = char_input();
@@ -145,8 +146,9 @@ int do_input(int a) {
 			c = f;
 			f = EOF;
 		}
-		return c;
+		rval = c;
 	}
+	return rval;
 }
 
 void do_output(int a, int c) {

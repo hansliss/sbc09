@@ -73,10 +73,10 @@ void usage(void)
 
 #define CHECKARG if(i==argc)usage();else i++;
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
- Word loadaddr=0x100;
- char *imagename=0;
+  // Word loadaddr=0x100;
+  // char *imagename=0;
  int i;
  escchar='\x1d'; 
  tracelo=0;tracehi=0xffff;
@@ -109,5 +109,6 @@ void main(int argc,char *argv[])
  set_term(escchar);
  pcreg=(mem[0xfffe]<<8)+mem[0xffff]; 
  interpr();
+ return 0;
 }
 

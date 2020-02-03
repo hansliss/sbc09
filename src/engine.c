@@ -559,7 +559,7 @@ void interpr(void)
    case 0x1E: /* EXG */ IMMBYTE(tb) { Word t2;
 			GETREG(tw,tb>>4) GETREG(t2,tb&15)
 			if ((tb&0x70) == 0x20 || (tb&0x70) == 0x30) { /* first op is CC or DP */
-				tw = (tw&0xff)<<8 | tw&0xff; /* high and low byte the same */
+			  tw = ((tw&0xff)<<8) | (tw&0xff); /* high and low byte the same */
 			}
                         SETREG(t2,tb>>4) SETREG(tw,tb&15)
 			} 
@@ -567,7 +567,7 @@ void interpr(void)
    case 0x1F: /* TFR */ IMMBYTE(tb) 
 			GETREG(tw,tb>>4) 
 			if ((tb&0x70) == 0x20 || (tb&0x70) == 0x30) { /* source is CC or DP */
-				tw = (tw&0xff)<<8 | tw&0xff; /* high and low byte the same */
+			  tw = ((tw&0xff)<<8) | (tw&0xff); /* high and low byte the same */
 			}
 			SETREG(tw,tb&15) 
 			break;
@@ -660,7 +660,7 @@ void interpr(void)
    			 PUSHBYTE(iccreg)
    			 iccreg&=tb;
                          iccreg|=0x80;
-                      while(!(irq==1&&!(iccreg&0x10)||irq==2&&!(iccreg&0x040)))
+			 while(!((irq==1&&!(iccreg&0x10))||(irq==2&&!(iccreg&0x040))))
                            ;/* Wait for irq */
                          if(irq==1)ipcreg=GETWORD(0xfff8);
                          	else ipcreg=GETWORD(0xfff6);

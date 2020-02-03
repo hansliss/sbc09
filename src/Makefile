@@ -9,7 +9,7 @@
 # license: GNU General Public License version 2, see LICENSE for more details.
 #
 
-CFLAGS=-O3 -fomit-frame-pointer -DTERM_CONTROL
+CFLAGS=-O3 -fomit-frame-pointer -DTERM_CONTROL -Wall
 
 V09FLAGS= -DUSE_TERMIOS #-DBIG_ENDIAN
 
