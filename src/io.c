@@ -28,6 +28,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<ctype.h>
+#include<signal.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -211,6 +212,8 @@ void do_output(int a, int c) {
 	xidx = 0;
       }
     }
+  } else {
+    fprintf(stderr, "ACIA ctrl port set to %02X.\n", c);
   }
 }
 

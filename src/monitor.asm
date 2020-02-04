@@ -102,9 +102,9 @@ ramstart	equ $400	;first free RAM address.
 ramtop  	equ $8000       ;top of RAM.
 
 * I/O port addresses
-aciactl		equ $a000	;Control port of ACIA
-aciasta		equ $a000	;Status port of ACIA
-aciadat		equ $a001	;Data port of ACIA
+aciactl		equ $FF00	;Control port of ACIA
+aciasta		equ $FF00	;Status port of ACIA
+aciadat		equ $FF01	;Data port of ACIA
 
 * ASCII control characters.
 SOH		equ 1
