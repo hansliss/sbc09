@@ -19,8 +19,6 @@ The idea is to use this to assemble source code into ROM images, and to
 model a physical 6809 computer with address decode and I/O devices, to
 test the design and the code.
 
-Note: The original docs mention a time
-
 Structure
 ---------
 
