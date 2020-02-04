@@ -1,4 +1,4 @@
-/* 6809 Simulator memspace module
+/* 6809 Simulator addrspace module
    created 2020 by Hans Liss
    license: GNU General Public License version 2, see LICENSE for more details.
 
@@ -9,13 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define engine
 #include "v09.h"
-#include "memspace.h"
+#include "addrspace.h"
 
 /* 6809 memory space */
-engine Byte * mem;
-
+Byte * mem;
 
 void initMem() {
   if((mem=calloc(1, MEMSIZE))==0) { 

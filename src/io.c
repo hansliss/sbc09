@@ -39,8 +39,8 @@
 #include <termios.h>
 #endif
 
-#define engine extern
 #include "v09.h"
+#include "addrspace.h"
 
 int tflags;
 struct termios termsetting;
@@ -219,11 +219,6 @@ void restore_term(void) {
   tcsetattr(0, TCSAFLUSH, &termsetting);
   fcntl(0, F_SETFL, tflags);
   signal(SIGALRM, SIG_IGN);
-}
-
-void do_exit(void) {
-  restore_term();
-  exit(0);
 }
 
 void do_escape(void) {

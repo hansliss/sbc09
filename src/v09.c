@@ -31,12 +31,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define engine extern
-
 #include "v09.h"
-#include "memspace.h"
+#include "cpu.h"
+#include "io.h"
+#include "addrspace.h"
 
 FILE *tracefile;
+
+void do_exit(void) {
+  restore_term();
+  exit(0);
+}
 
 void do_trace(void)
 {

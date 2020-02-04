@@ -7,29 +7,30 @@
 
 */
 
-#include "memspace.h"
+#ifndef _V09_H
+#define _V09_H
 
 typedef unsigned char Byte;
 typedef unsigned short Word;
 
 /* 6809 registers */
-engine Byte ccreg,dpreg;
-engine Word xreg,yreg,ureg,sreg,ureg,pcreg;
+extern Byte ccreg,dpreg;
+extern Word xreg,yreg,ureg,sreg,ureg,pcreg;
 
-engine Byte d_reg[2];
+extern Byte d_reg[2];
 extern Word *dreg;
 extern Byte *breg,*areg;
 
-engine volatile int tracing,attention,escape,irq;
-engine Word tracehi,tracelo;
-engine char escchar;
+extern volatile int tracing,attention,escape,irq;
+extern Word tracehi,tracelo;
+extern char escchar;
 
-void interpr(void);
-void do_exit(void);
-int do_input(int);
-void set_term(char);
-void do_trace(void);
-void do_output(int,int);
-void do_escape(void);
+extern void do_exit(void);
+extern void do_trace(void);
 
+extern int do_input(int);
+extern void set_term(char);
+extern void do_output(int,int);
+extern void do_escape(void);
 
+#endif

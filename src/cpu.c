@@ -39,12 +39,23 @@
 
 #include <stdio.h>
 
-#define engine
 #include "v09.h"
+#include "addrspace.h"
 
 Byte aca,acb;
 Byte *breg=&aca,*areg=&acb;
 static int tracetrick=0;
+
+Byte ccreg,dpreg;
+Word xreg,yreg,ureg,sreg,ureg,pcreg;
+
+Byte d_reg[2];
+Word *dreg;
+Byte *breg,*areg;
+
+volatile int tracing,attention,escape,irq;
+Word tracehi,tracelo;
+char escchar;
 
 #define GETWORD(a) (getMem(a) << 8 | getMem((a) + 1))
 #define SETBYTE(a,n) do { setMem((a),(n)); } while(0)
