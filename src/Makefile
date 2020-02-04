@@ -13,13 +13,10 @@ CFLAGS=-O3 -fomit-frame-pointer -DTERM_CONTROL -Wall
 
 V09FLAGS= -DUSE_TERMIOS #-DBIG_ENDIAN
 
-
-SIM_BIN=v09s v09st 
-
 APPS=mon2.s
 
 # will be installed to ".."
-BIN=a09 v09 $(SIM_BIN) v09.rom
+BIN=a09 v09 v09.rom
 
 TARGETS=$(BIN) $(APPS)
 
@@ -60,12 +57,6 @@ makerom: makerom.c
 
 # ------------------------------------
 
-v09s: v09s.c
-
-v09st: v09s.c
-	$(CC) $(CFLAGS) -DTRACE -o $@ $<
-
-# ------------------------------------
 
 install:
 	-for bin in $(BIN); do \
