@@ -38,8 +38,11 @@
 */
 
 #include <stdio.h>
+#include<signal.h>
+#include<sys/time.h>
 
 #include "v09.h"
+#include "io.h"
 #include "addrspace.h"
 
 Byte aca,acb;
@@ -300,6 +303,22 @@ unsigned char haspostbyte[] = {
   /*E*/      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   /*F*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
+
+void timehandler(int sig) {
+  attention = 1;
+  irq = 2;
+  signal(SIGALRM, timehandler);
+}
+
+void setupTimer() {
+  struct itimerval timercontrol;
+  signal(SIGALRM, timehandler);
+  timercontrol.it_interval.tv_sec = 0;
+  timercontrol.it_interval.tv_usec = 20000;
+  timercontrol.it_value.tv_sec = 0;
+  timercontrol.it_value.tv_usec = 20000;
+  setitimer(ITIMER_REAL, &timercontrol, NULL);
+}
 
 void interpr(void) {
   Word ixreg,iyreg,iureg,isreg,ipcreg;

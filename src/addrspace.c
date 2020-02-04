@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "v09.h"
+#include "io.h"
 #include "addrspace.h"
 
 /* 6809 memory space */

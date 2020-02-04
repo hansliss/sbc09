@@ -28,9 +28,4 @@ extern char escchar;
 extern void do_exit(void);
 extern void do_trace(void);
 
-extern int do_input(int);
-extern void set_term(char);
-extern void do_output(int,int);
-extern void do_escape(void);
-
 #endif

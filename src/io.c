@@ -28,8 +28,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<ctype.h>
-#include<signal.h>
-#include<sys/time.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -40,6 +38,7 @@
 #endif
 
 #include "v09.h"
+#include "io.h"
 #include "addrspace.h"
 
 int tflags;
@@ -301,12 +300,6 @@ void do_escape(void) {
   set_term(escchar);
 }
 
-void timehandler(int sig) {
-  attention = 1;
-  irq = 2;
-  signal(SIGALRM, timehandler);
-}
-
 void handler(int sig) {
   escape = 1;
   attention = 1;
@@ -314,7 +307,6 @@ void handler(int sig) {
 
 void set_term(char c) {
   struct termios newterm;
-  struct itimerval timercontrol;
   signal(SIGQUIT, SIG_IGN);
   signal(SIGTSTP, SIG_IGN);
   signal(SIGINT, handler);
@@ -328,10 +320,4 @@ void set_term(char c) {
   tcsetattr(0, TCSAFLUSH, &newterm);
   tflags = fcntl(0, F_GETFL, 0);
   fcntl(0, F_SETFL, tflags | O_NDELAY); /* Make input from stdin non-blocking */
-  signal(SIGALRM, timehandler);
-  timercontrol.it_interval.tv_sec = 0;
-  timercontrol.it_interval.tv_usec = 20000;
-  timercontrol.it_value.tv_sec = 0;
-  timercontrol.it_value.tv_usec = 20000;
-  setitimer(ITIMER_REAL, &timercontrol, NULL);
 }

@@ -98,6 +98,7 @@ int main(int argc,char *argv[])
  initMem();
  read_image("v09.rom", 0x8000); 
  set_term(escchar);
+ setupTimer();
  pcreg=(getMem(0xfffe)<<8)+getMem(0xffff);
  interpr();
  return 0;

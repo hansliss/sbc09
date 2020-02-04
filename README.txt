@@ -7,20 +7,19 @@ It contains a assembler and simulator for the Motorola M6809 processor.
 copyleft (c) 1994-2014 by the sbc09 team, see AUTHORS for more details.
 license: GNU General Public License version 2, see LICENSE for more details.
 
-
-Forum thread: http://archive.worldofdragon.org/phpBB3/viewtopic.php?f=8&t=4880
-Project: https://github.com/6809/sbc09
-
+Original project: https://github.com/6809/sbc09
+This fork: https://github.com/hansliss/sbc09
 
 For the usage of the assembler a09 and 6809 single board system v09 
 read doc/sbc09.creole!
 
+This version is a 6809 system as a stand alone environment built as v09,
+with a separate module containing address decoding and memory access code.
+The idea is to use this to assemble source code into ROM images, and to
+model a physical 6809 computer with address decode and I/O devices, to
+test the design and the code.
 
-This distribution includes two different kinds of simulators:
- 1. The old sim6809 based "simple" simulator built as v09s, v09st
- 2. The 6809 single board system as a stand alone environment built as v09
-
-
+Note: The original docs mention a time
 
 Structure
 ---------
@@ -42,19 +41,10 @@ src/
         implemented. Some provisions are already made internally for macros
         and/or relocatable objects.
 
-  v09s.c
-      The (old) 6809 simulator. Loads a binary image (from a09) at adress $100
-      and starts executing. SWI2 and SWI3 are for character output/input.
-      SYNC stops simulation. When compiling set -DBIG_ENDIAN if your
-      computer is big-endian. Set TERM_CONTROL for a crude single character
-      (instead of ANSI line-by-line) input. Works on Unix.
-
-  v09stc.c
-      Same as v09s.c but for Turbo C. Has its own term control.
-
   v09.c
-  engine.c
+  cpu.c
   io.c
+  addrspace.c
       The 6809 single board simulator/emulator v09.
        
   mon2.asm
@@ -98,59 +88,7 @@ examples_forth/
 
 
 
-Notes on Linux Fedora Core 6
-----------------------------
-2012-06-04
-
-Compiling v09s, v09st:
-
- * BIG_ENDIAN (already used by LINUX itself, changed to CPU_BIG_ENDIAN)
-   Now automatically set according to BIG_ENDIAN and BYTE_ORDER
-   if existing.
-
- * If TERM_CONTROL mode is active the keyboard is not really in raw mode -
-   keyboard signals are still allowed.
-
- * A tracefilter based on register values can be placed in the TRACE area to
-   get tracing output triggered by special states 
-   
-
-
-a09 Assembler
--------------
-
-Bugfixes:
- * addres modes  a,INDEXREG b,INDEXREG d,INDEXREG now known
-    as *legal*!
-
-Extended version:
-    http://lennartb.home.xs4all.nl/A09.c
-    (see above)
-
- * options -x and -s produces output in Intel Binary/Srecord format,
-   contains the above mentioned bugfixes (but fixed by the original
-   author).
-
-
-
-
-v09s* Simulator
----------------
-
-### CC register
-
-E F H I N Z V C  Flag
-8 7 6 5 4 3 2 1  Bit
-| | | | | | | |
-| | | | | | | +- $01
-| | | | | | +--- $02
-| | | | | +----- $04
-| | | | +------- $08
-| | | +--------- $10
-| | +----------- $20
-| +------------- $40
-+--------------- $80
-
+# Old notes:
 
 # differences from real 6809:
 
@@ -178,8 +116,6 @@ ASR (=LSR) does the following:
 
 
 But note: LSR never touches the half-carry!
-
-
 ## TFR/EXG with unaligned register sizes
 
 See http://archive.worldofdragon.org/phpBB3/viewtopic.php?f=8&t=5512
@@ -223,36 +159,6 @@ high and low byte!
     sync        exit simulator
 
 
-### start program
-v09s BINARY
-
-### start program with tracing output on STDOUT
-v09st BINARY
-
-### run program and leave memory dump (64k)
-
-# memory dump in file dump.v09
-v09s -d BINARY 
-
-
-
-### Bugfixes
-
- * static int index;
-   otherwise the global C library function index() is referenced!
-   Write access on it leads to a core dump.
-
- * BIG_ENDIAN is not useable in FLAG because (POSIX?) Unix
-   (especially Linux) defines its byte order.
-   If BIG_ENDIAN == BYTE_ORDER -> architecture is big endian!
-   Changed to CPU_BIG_ENDIAN, which is refering BIG_ENDIAN and
-   BYTE_ORDER automatically (if existent).
-
-
-
-
-
-
 eForth
 ------
 
@@ -262,22 +168,16 @@ Source:
 
     Backspace character changed from 127 to 8.
 
-
 Memory-Layout:
 
     0100   At this address the binary is placed to, the Forth entry point
     03C0   USER area start
     4000   Memory TOP
 
-
 I/O:
     Keyboard input:
      * ^H or BSP deletes character
      * RETURN -> interrupts (long) output
-
-Start:
-
-    ../v09s ef09
 
 
 Bugs:
@@ -405,12 +305,11 @@ Links/References
 
 
 Project:
-  https://github.com/6809/sbc09
-  Maintained by the original author and others.
+  https://github.com/hansliss/sbc09
 
 Source:
-  http://groups.google.com/group/alt.sources/browse_thread/thread/8bfd60536ec34387/94a7cce3fdc5df67
-  Autor: Lennart Benschop  lennart@blade.stack.urc.tue.nl, 
+  Original source: http://groups.google.com/group/alt.sources/browse_thread/thread/8bfd60536ec34387/94a7cce3fdc5df67
+  Original author: Lennart Benschop  lennart@blade.stack.urc.tue.nl, 
                 lennartb@xs4all.nl (Webpage, Subject must start with "Your Homepage"!)
 
   Newsgroups: alt.sources
@@ -425,10 +324,8 @@ Homepage/Download links of Lennart Benschop:
   http://lennartb.home.xs4all.nl/sbc09.tar.gz
   http://lennartb.home.xs4all.nl/A09.c
 
-
 Emulator for 6809 written in Python, can run sbc09 ROM:
   https://github.com/jedie/DragonPy/
-
 
 Newer posting in alt.sources (1994):
 
