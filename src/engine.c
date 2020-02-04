@@ -46,23 +46,23 @@ Byte aca,acb;
 Byte *breg=&aca,*areg=&acb;
 static int tracetrick=0;
 
-#define GETWORD(a) (mem[a]<<8|mem[(a)+1])
-#define SETBYTE(a,n) do { if(!((a) & 0x8000)) mem[(a)] = (n); } while(0)
-#define SETWORD(a,n) do { if(!((a) & 0x8000)) { mem[(a)] = (n)>>8; mem[(a)+1]=n; } } while(0)
+#define GETWORD(a) (getMem(a) << 8 | getMem((a) + 1))
+#define SETBYTE(a,n) do { setMem((a),(n)); } while(0)
+#define SETWORD(a,n) do { setMem((a),(n)>>8); setMem((a)+1, (n)); } while(0)
 /* Two bytes of a word are fetched separately because of
    the possible wrap-around at address $ffff and alignment
 */
 
-#define IMMBYTE(b) do { b=mem[ipcreg++]; } while(0)
+#define IMMBYTE(b) do { b=getMem(ipcreg++); } while(0)
 #define IMMWORD(w) do { w=GETWORD(ipcreg);ipcreg+=2; } while(0)
 
 #define PUSHBYTE(b) do { --isreg;SETBYTE(isreg,b); } while(0)
 #define PUSHWORD(w) do { isreg-=2;SETWORD(isreg,w); } while(0)
-#define PULLBYTE(b) do { b=mem[isreg++]; } while(0)
+#define PULLBYTE(b) do { b=getMem(isreg++); } while(0)
 #define PULLWORD(w) do { w=GETWORD(isreg);isreg+=2; } while(0)
 #define PSHUBYTE(b) do { --iureg;SETBYTE(iureg,b); } while(0)
 #define PSHUWORD(w) do { iureg-=2;SETWORD(iureg,w); } while(0)
-#define PULUBYTE(b) do { b=mem[iureg++]; } while(0)
+#define PULUBYTE(b) do { b=getMem(iureg++); } while(0)
 #define PULUWORD(w) do { w=GETWORD(iureg);iureg+=2; } while(0)
 
 #define SIGNED(b) ((Word)(((b) & 0x80)?((b)|0xff00):(b)))
@@ -236,20 +236,12 @@ static int tracetrick=0;
    for port addresses */
 #define LOADAC(reg)		      \
   do {				      \
-    if ((eaddr & 0xff00) != IOPAGE) { \
-      reg=mem[eaddr];		      \
-    } else {			      \
-      reg=do_input(eaddr&0xff);	      \
-    }				      \
+    reg=getMem(eaddr);		      \
   } while (0)
 
 #define STOREAC(reg)				\
   do {						\
-    if ((eaddr & 0xff00) != IOPAGE) {		\
-      SETBYTE(eaddr,reg);			\
-    } else {					\
-      do_output(eaddr & 0xff, reg);		\
-    }						\
+    setMem(eaddr,reg);				\
   } while (0)
 
 #define LOADREGS				\
@@ -347,9 +339,9 @@ void interpr(void) {
     }
     iflag=0;
   flaginstr:  /* $10 and $11 instructions return here */
-    ireg = mem[ipcreg++];
+    ireg = getMem(ipcreg++);
     if(haspostbyte[ireg]) {
-      Byte postbyte=mem[ipcreg++];
+      Byte postbyte=getMem(ipcreg++);
       switch(postbyte) {
       case 0x00: eaddr=ixreg;break;
       case 0x01: eaddr=ixreg+1;break;
@@ -612,15 +604,15 @@ void interpr(void) {
     switch(ireg) {
     case 0x00: /*NEG direct*/
       DIRECT;
-      tw = -mem[eaddr];
-      SETSTATUS(0, mem[eaddr], tw);
+      tw = -getMem(eaddr);
+      SETSTATUS(0, getMem(eaddr), tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x01: break;/*ILLEGAL*/
     case 0x02: break;/*ILLEGAL*/
     case 0x03: /*COM direct*/
       DIRECT;
-      tb = ~mem[eaddr];
+      tb = ~getMem(eaddr);
       SETNZ8(tb);
       SEC;
       CLV;
@@ -628,7 +620,7 @@ void interpr(void) {
       break;
     case 0x04: /*LSR direct*/
       DIRECT;
-      tb=mem[eaddr];
+      tb=getMem(eaddr);
       if(tb & 0x01) {
 	SEC;
       } else {
@@ -642,18 +634,18 @@ void interpr(void) {
     case 0x06: /*ROR direct*/
       DIRECT;
       tb = (iccreg & 0x01)<<7;
-      if (mem[eaddr] & 0x01) {
+      if (getMem(eaddr) & 0x01) {
 	SEC;
       } else {
 	CLC;
       }
-      tw = (mem[eaddr] >> 1) + tb;
+      tw = (getMem(eaddr) >> 1) + tb;
       SETNZ8(tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x07: /*ASR direct*/
       DIRECT;
-      tb=mem[eaddr];
+      tb=getMem(eaddr);
       if (tb & 0x01) {
 	SEC;
       } else {
@@ -673,13 +665,13 @@ void interpr(void) {
       break;
     case 0x08: /*ASL direct*/
       DIRECT;
-      tw = mem[eaddr] << 1;
-      SETSTATUSH(mem[eaddr], mem[eaddr],tw);
+      tw = getMem(eaddr) << 1;
+      SETSTATUSH(getMem(eaddr), getMem(eaddr),tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x09: /*ROL direct*/
       DIRECT;
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       tw = iccreg & 0x01;
       if (tb&0x80) {
 	SEC;
@@ -697,7 +689,7 @@ void interpr(void) {
       break;
     case 0x0A: /*DEC direct*/
       DIRECT;
-      tb = mem[eaddr] - 1;
+      tb = getMem(eaddr) - 1;
       if (tb == 0x7F) {
 	SEV;
       } else {
@@ -709,7 +701,7 @@ void interpr(void) {
     case 0x0B: break; /*ILLEGAL*/
     case 0x0C: /*INC direct*/
       DIRECT;
-      tb = mem[eaddr] + 1;
+      tb = getMem(eaddr) + 1;
       if (tb == 0x80) {
 	SEV;
       } else {
@@ -720,7 +712,7 @@ void interpr(void) {
       break;
     case 0x0D: /*TST direct*/
       DIRECT;
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       SETNZ8(tb);
       break;
     case 0x0E: /*JMP direct*/
@@ -1299,21 +1291,21 @@ void interpr(void) {
       CLC;
       break;
     case 0x60: /*NEG indexed*/
-      tw = -mem[eaddr];
-      SETSTATUS(0,mem[eaddr],tw);
+      tw = -getMem(eaddr);
+      SETSTATUS(0,getMem(eaddr),tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x61: break;/*ILLEGAL*/
     case 0x62: break;/*ILLEGAL*/
     case 0x63: /*COM indexed*/
-      tb = ~mem[eaddr];
+      tb = ~getMem(eaddr);
       SETNZ8(tb);
       SEC;
       CLV;
       SETBYTE(eaddr,tb);
       break;
     case 0x64: /*LSR indexed*/
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       if (tb & 0x01) {
 	SEC;
       } else {
@@ -1325,17 +1317,17 @@ void interpr(void) {
     case 0x65: break;/* ILLEGAL*/
     case 0x66: /*ROR indexed*/
       tb = (iccreg & 0x01) << 7;
-      if (mem[eaddr] & 0x01) {
+      if (getMem(eaddr) & 0x01) {
 	SEC;
       } else {
 	CLC;
       }
-      tw = (mem[eaddr] >> 1) + tb;
+      tw = (getMem(eaddr) >> 1) + tb;
       SETNZ8(tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x67: /*ASR indexed*/
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       if (tb & 0x01) {
 	SEC;
       } else {
@@ -1354,12 +1346,12 @@ void interpr(void) {
       SETNZ8(tb);
       break;
     case 0x68: /*ASL indexed*/
-      tw = mem[eaddr] << 1;
-      SETSTATUSH(mem[eaddr],mem[eaddr],tw);
+      tw = getMem(eaddr) << 1;
+      SETSTATUSH(getMem(eaddr),getMem(eaddr),tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x69: /*ROL indexed*/
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       tw = iccreg & 0x01;
       if (tb & 0x80) {
 	SEC;
@@ -1376,7 +1368,7 @@ void interpr(void) {
       SETBYTE(eaddr,tb);
       break;
     case 0x6A: /*DEC indexed*/
-      tb = mem[eaddr] - 1;
+      tb = getMem(eaddr) - 1;
       if (tb == 0x7F) {
 	SEV;
       } else{
@@ -1387,7 +1379,7 @@ void interpr(void) {
       break;
     case 0x6B: break; /*ILLEGAL*/
     case 0x6C: /*INC indexed*/
-      tb = mem[eaddr] + 1;
+      tb = getMem(eaddr) + 1;
       if (tb == 0x80) {
 	SEV;
       } else {
@@ -1397,7 +1389,7 @@ void interpr(void) {
       SETBYTE(eaddr,tb);
       break;
     case 0x6D: /*TST indexed*/
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       SETNZ8(tb);
       break;
     case 0x6E: /*JMP indexed*/
@@ -1412,15 +1404,15 @@ void interpr(void) {
       break;
     case 0x70: /*NEG ext*/
       EXTENDED;
-      tw = -mem[eaddr];
-      SETSTATUS(0,mem[eaddr],tw);
+      tw = -getMem(eaddr);
+      SETSTATUS(0,getMem(eaddr),tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x71: break;/*ILLEGAL*/
     case 0x72: break;/*ILLEGAL*/
     case 0x73: /*COM ext*/
       EXTENDED;
-      tb = ~mem[eaddr];
+      tb = ~getMem(eaddr);
       SETNZ8(tb);
       SEC;
       CLV;
@@ -1428,7 +1420,7 @@ void interpr(void) {
       break;
     case 0x74: /*LSR ext*/
       EXTENDED;
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       if (tb & 0x01) {
 	SEC;
       } else {
@@ -1442,18 +1434,18 @@ void interpr(void) {
     case 0x76: /*ROR ext*/
       EXTENDED;
       tb = (iccreg & 0x01) << 7;
-      if (mem[eaddr] & 0x01) {
+      if (getMem(eaddr) & 0x01) {
 	SEC;
       } else {
 	CLC;
       }
-      tw = (mem[eaddr] >> 1) + tb;
+      tw = (getMem(eaddr) >> 1) + tb;
       SETNZ8(tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x77: /*ASR ext*/
       EXTENDED;
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       if (tb & 0x01) {
 	SEC;
       } else {
@@ -1473,13 +1465,13 @@ void interpr(void) {
       break;
     case 0x78: /*ASL ext*/
       EXTENDED;
-      tw = mem[eaddr] << 1;
-      SETSTATUSH(mem[eaddr],mem[eaddr],tw);
+      tw = getMem(eaddr) << 1;
+      SETSTATUSH(getMem(eaddr),getMem(eaddr),tw);
       SETBYTE(eaddr,tw);
       break;
     case 0x79: /*ROL ext*/
       EXTENDED;
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       tw = iccreg & 0x01;
       if (tb & 0x80) {
 	SEC;
@@ -1497,7 +1489,7 @@ void interpr(void) {
       break;
     case 0x7A: /*DEC ext*/
       EXTENDED;
-      tb = mem[eaddr] - 1;
+      tb = getMem(eaddr) - 1;
       if (tb == 0x7F) {
 	SEV;
       } else {
@@ -1509,7 +1501,7 @@ void interpr(void) {
     case 0x7B: break; /*ILLEGAL*/
     case 0x7C: /*INC ext*/
       EXTENDED;
-      tb = mem[eaddr] + 1;
+      tb = getMem(eaddr) + 1;
       if (tb == 0x80) {
 	SEV;
       } else {
@@ -1520,7 +1512,7 @@ void interpr(void) {
       break;
     case 0x7D: /*TST ext*/
       EXTENDED;
-      tb = mem[eaddr];
+      tb = getMem(eaddr);
       SETNZ8(tb);
       break;
     case 0x7E: /*JMP ext*/
@@ -1536,19 +1528,19 @@ void interpr(void) {
       break;
     case 0x80: /*SUBA immediate*/
       IMM8;
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0x81: /*CMPA immediate*/
       IMM8;
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       break;
     case 0x82: /*SBCA immediate*/
       IMM8;
-      tw = iareg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0x83: /*SUBD (CMPD CMPU) immediate*/
@@ -1570,13 +1562,13 @@ void interpr(void) {
       break;
     case 0x84: /*ANDA immediate*/
       IMM8;
-      iareg = iareg & mem[eaddr];
+      iareg = iareg & getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0x85: /*BITA immediate*/
       IMM8;
-      tb = iareg & mem[eaddr];
+      tb = iareg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -1594,26 +1586,26 @@ void interpr(void) {
       break;
     case 0x88: /*EORA immediate*/
       IMM8;
-      iareg = iareg ^ mem[eaddr];
+      iareg = iareg ^ getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0x89: /*ADCA immediate*/
       IMM8;
-      tw = iareg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0x8A: /*ORA immediate*/
       IMM8;
-      iareg = iareg | mem[eaddr];
+      iareg = iareg | getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0x8B: /*ADDA immediate*/
       IMM8;
-      tw = iareg + mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg = tw;
       break;
     case 0x8C: /*CMPX (CMPY CMPS) immediate */
@@ -1663,19 +1655,19 @@ void interpr(void) {
       break;
     case 0x90: /*SUBA direct*/
       DIRECT;
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0x91: /*CMPA direct*/
       DIRECT;
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       break;
     case 0x92: /*SBCA direct*/
       DIRECT;
-      tw = iareg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0x93: /*SUBD (CMPD CMPU) direct*/
@@ -1697,13 +1689,13 @@ void interpr(void) {
       break;
     case 0x94: /*ANDA direct*/
       DIRECT;
-      iareg = iareg & mem[eaddr];
+      iareg = iareg & getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0x95: /*BITA direct*/
       DIRECT;
-      tb = iareg & mem[eaddr];
+      tb = iareg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -1721,26 +1713,26 @@ void interpr(void) {
       break;
     case 0x98: /*EORA direct*/
       DIRECT;
-      iareg = iareg ^ mem[eaddr];
+      iareg = iareg ^ getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0x99: /*ADCA direct*/
       DIRECT;
-      tw = iareg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(iareg,getMem(eaddr),tw);
       iareg = tw;
       break;
     case 0x9A: /*ORA direct*/
       DIRECT;
-      iareg = iareg | mem[eaddr];
+      iareg = iareg | getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0x9B: /*ADDA direct*/
       DIRECT;
-      tw = iareg + mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0x9C: /*CMPX (CMPY CMPS) direct */
@@ -1789,17 +1781,17 @@ void interpr(void) {
       SETWORD(eaddr,tw);
       break;
     case 0xA0: /*SUBA indexed*/
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xA1: /*CMPA indexed*/
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       break;
     case 0xA2: /*SBCA indexed*/
-      tw = iareg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xA3: /*SUBD (CMPD CMPU) indexed*/
@@ -1819,12 +1811,12 @@ void interpr(void) {
       }
       break;
     case 0xA4: /*ANDA indexed*/
-      iareg = iareg & mem[eaddr];
+      iareg = iareg & getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0xA5: /*BITA indexed*/
-      tb = iareg & mem[eaddr];
+      tb = iareg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -1839,23 +1831,23 @@ void interpr(void) {
       STOREAC(iareg);
       break;
     case 0xA8: /*EORA indexed*/
-      iareg = iareg ^ mem[eaddr];
+      iareg = iareg ^ getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0xA9: /*ADCA indexed*/
-      tw = iareg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xAA: /*ORA indexed*/
-      iareg = iareg | mem[eaddr];
+      iareg = iareg | getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0xAB: /*ADDA indexed*/
-      tw = iareg + mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xAC: /*CMPX (CMPY CMPS) indexed */
@@ -1901,19 +1893,19 @@ void interpr(void) {
       break;
     case 0xB0: /*SUBA ext*/
       EXTENDED;
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg = tw;
       break;
     case 0xB1: /*CMPA ext*/
       EXTENDED;
-      tw = iareg - mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       break;
     case 0xB2: /*SBCA ext*/
       EXTENDED;
-      tw = iareg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xB3: /*SUBD (CMPD CMPU) ext*/
@@ -1935,13 +1927,13 @@ void interpr(void) {
       break;
     case 0xB4: /*ANDA ext*/
       EXTENDED;
-      iareg = iareg & mem[eaddr];
+      iareg = iareg & getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0xB5: /*BITA ext*/
       EXTENDED;
-      tb = iareg & mem[eaddr];
+      tb = iareg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -1959,26 +1951,26 @@ void interpr(void) {
       break;
     case 0xB8: /*EORA ext*/
       EXTENDED;
-      iareg = iareg ^ mem[eaddr];
+      iareg = iareg ^ getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0xB9: /*ADCA ext*/
       EXTENDED;
-      tw = iareg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xBA: /*ORA ext*/
       EXTENDED;
-      iareg = iareg | mem[eaddr];
+      iareg = iareg | getMem(eaddr);
       SETNZ8(iareg);
       CLV;
       break;
     case 0xBB: /*ADDA ext*/
       EXTENDED;
-      tw = iareg + mem[eaddr];
-      SETSTATUS(iareg,mem[eaddr],tw);
+      tw = iareg + getMem(eaddr);
+      SETSTATUS(iareg,getMem(eaddr),tw);
       iareg=tw;
       break;
     case 0xBC: /*CMPX (CMPY CMPS) ext */
@@ -2028,19 +2020,19 @@ void interpr(void) {
       break;
     case 0xC0: /*SUBB immediate*/
       IMM8;
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg = tw;
       break;
     case 0xC1: /*CMPB immediate*/
       IMM8;
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       break;
     case 0xC2: /*SBCB immediate*/
       IMM8;
-      tw = ibreg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xC3: /*ADDD immediate*/
@@ -2055,13 +2047,13 @@ void interpr(void) {
       }break;
     case 0xC4: /*ANDB immediate*/
       IMM8;
-      ibreg = ibreg & mem[eaddr];
+      ibreg = ibreg & getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xC5: /*BITB immediate*/
       IMM8;
-      tb = ibreg & mem[eaddr];
+      tb = ibreg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -2079,26 +2071,26 @@ void interpr(void) {
       break;
     case 0xC8: /*EORB immediate*/
       IMM8;
-      ibreg = ibreg ^ mem[eaddr];
+      ibreg = ibreg ^ getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xC9: /*ADCB immediate*/
       IMM8;
-      tw = ibreg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(ibreg,getMem(eaddr),tw);
       ibreg = tw;
       break;
     case 0xCA: /*ORB immediate*/
       IMM8;
-      ibreg = ibreg | mem[eaddr];
+      ibreg = ibreg | getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xCB: /*ADDB immediate*/
       IMM8;
-      tw = ibreg + mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xCC: /*LDD immediate */
@@ -2139,19 +2131,19 @@ void interpr(void) {
       break;
     case 0xD0: /*SUBB direct*/
       DIRECT;
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg = tw;
       break;
     case 0xD1: /*CMPB direct*/
       DIRECT;
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       break;
     case 0xD2: /*SBCB direct*/
       DIRECT;
-      tw = ibreg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xD3: /*ADDD direct*/
@@ -2167,13 +2159,13 @@ void interpr(void) {
       break;
     case 0xD4: /*ANDB direct*/
       DIRECT;
-      ibreg = ibreg & mem[eaddr];
+      ibreg = ibreg & getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xD5: /*BITB direct*/
       DIRECT;
-      tb = ibreg & mem[eaddr];
+      tb = ibreg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -2191,26 +2183,26 @@ void interpr(void) {
       break;
     case 0xD8: /*EORB direct*/
       DIRECT;
-      ibreg = ibreg ^ mem[eaddr];
+      ibreg = ibreg ^ getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xD9: /*ADCB direct*/
       DIRECT;
-      tw = ibreg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xDA: /*ORB direct*/
       DIRECT;
-      ibreg = ibreg | mem[eaddr];
+      ibreg = ibreg | getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xDB: /*ADDB direct*/
       DIRECT;
-      tw = ibreg + mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xDC: /*LDD direct */
@@ -2250,17 +2242,17 @@ void interpr(void) {
       SETWORD(eaddr,tw);
       break;
     case 0xE0: /*SUBB indexed*/
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg = tw;
       break;
     case 0xE1: /*CMPB indexed*/
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       break;
     case 0xE2: /*SBCB indexed*/
-      tw = ibreg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xE3: /*ADDD indexed*/
@@ -2274,12 +2266,12 @@ void interpr(void) {
       }
       break;
     case 0xE4: /*ANDB indexed*/
-      ibreg = ibreg & mem[eaddr];
+      ibreg = ibreg & getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xE5: /*BITB indexed*/
-      tb = ibreg & mem[eaddr];
+      tb = ibreg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -2294,23 +2286,23 @@ void interpr(void) {
       STOREAC(ibreg);
       break;
     case 0xE8: /*EORB indexed*/
-      ibreg = ibreg ^ mem[eaddr];
+      ibreg = ibreg ^ getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xE9: /*ADCB indexed*/
-      tw = ibreg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xEA: /*ORB indexed*/
-      ibreg = ibreg | mem[eaddr];
+      ibreg = ibreg | getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xEB: /*ADDB indexed*/
-      tw = ibreg + mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xEC: /*LDD indexed */
@@ -2346,19 +2338,19 @@ void interpr(void) {
       break;
     case 0xF0: /*SUBB ext*/
       EXTENDED;
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xF1: /*CMPB ext*/
       EXTENDED;
-      tw = ibreg - mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       break;
     case 0xF2: /*SBCB ext*/
       EXTENDED;
-      tw = ibreg - mem[eaddr] - (iccreg & 0x01);
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg - getMem(eaddr) - (iccreg & 0x01);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg = tw;
       break;
     case 0xF3: /*ADDD ext*/
@@ -2374,13 +2366,13 @@ void interpr(void) {
       break;
     case 0xF4: /*ANDB ext*/
       EXTENDED;
-      ibreg = ibreg & mem[eaddr];
+      ibreg = ibreg & getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xF5: /*BITB ext*/
       EXTENDED;
-      tb = ibreg & mem[eaddr];
+      tb = ibreg & getMem(eaddr);
       SETNZ8(tb);
       CLV;
       break;
@@ -2398,26 +2390,26 @@ void interpr(void) {
       break;
     case 0xF8: /*EORB ext*/
       EXTENDED;
-      ibreg = ibreg ^ mem[eaddr];
+      ibreg = ibreg ^ getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xF9: /*ADCB ext*/
       EXTENDED;
-      tw = ibreg + mem[eaddr] + (iccreg & 0x01);
-      SETSTATUSH(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr) + (iccreg & 0x01);
+      SETSTATUSH(ibreg,getMem(eaddr),tw);
       ibreg=tw;
       break;
     case 0xFA: /*ORB ext*/
       EXTENDED;
-      ibreg = ibreg | mem[eaddr];
+      ibreg = ibreg | getMem(eaddr);
       SETNZ8(ibreg);
       CLV;
       break;
     case 0xFB: /*ADDB ext*/
       EXTENDED;
-      tw = ibreg + mem[eaddr];
-      SETSTATUS(ibreg,mem[eaddr],tw);
+      tw = ibreg + getMem(eaddr);
+      SETSTATUS(ibreg,getMem(eaddr),tw);
       ibreg = tw;
       break;
     case 0xFC: /*LDD ext */

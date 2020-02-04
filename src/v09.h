@@ -7,6 +7,8 @@
 
 */
 
+#include "memspace.h"
+
 typedef unsigned char Byte;
 typedef unsigned short Word;
 
@@ -18,18 +20,9 @@ engine Byte d_reg[2];
 extern Word *dreg;
 extern Byte *breg,*areg;
 
-/* 6809 memory space */
-#ifdef MSDOS
- engine Byte * mem;
-#else
- engine Byte mem[65536];
-#endif
-
 engine volatile int tracing,attention,escape,irq;
 engine Word tracehi,tracelo;
 engine char escchar;
-
-#define IOPAGE 0xa000
 
 void interpr(void);
 void do_exit(void);

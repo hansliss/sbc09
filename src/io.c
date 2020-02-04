@@ -296,7 +296,7 @@ void do_escape(void) {
       blocknum = 1;
       break;
     case 'R':
-      pcreg = (mem[0xfffe] << 8) + mem[0xffff];
+      pcreg = (getMem(0xfffe) << 8) + getMem(0xffff);
     }
   }
   if (!tracing) {

@@ -31,8 +31,8 @@ all: $(TARGETS)
 
 a09: a09.c
 
-v09: v09.o engine.o io.o
-	$(CC) -o v09 $(CFLAGS) v09.o engine.o io.o
+v09: v09.o engine.o io.o memspace.o
+	$(CC) -o v09 $(CFLAGS) v09.o engine.o io.o memspace.o
 
 v09.o: v09.c v09.h
 	$(CC) -c $(CFLAGS) $(V09FLAGS) v09.c
@@ -42,6 +42,9 @@ engine.o: engine.c v09.h
 
 io.o: io.c v09.h
 	$(CC) -c $(CFLAGS) $(V09FLAGS) io.c
+
+memspace.o: memspace.c v09.h
+	$(CC) -c $(CFLAGS) $(V09FLAGS) memspace.c
 
 v09.rom: makerom monitor.s 
 	./makerom <monitor.s

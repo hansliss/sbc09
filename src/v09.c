@@ -34,6 +34,7 @@
 #define engine extern
 
 #include "v09.h"
+#include "memspace.h"
 
 FILE *tracefile;
 
@@ -42,30 +43,17 @@ void do_trace(void)
  Word pc=pcreg;
  Byte ir;
  fprintf(tracefile,"pc=%04x ",pc);
- ir=mem[pc++];
+ ir=getMem(pc++);
  fprintf(tracefile,"i=%02x ",ir);
- if((ir&0xfe)==0x10)
-    fprintf(tracefile,"%02x ",mem[pc]);else fprintf(tracefile,"   ");
-     fprintf(tracefile,"x=%04x y=%04x u=%04x s=%04x a=%02x b=%02x cc=%02x\n",
-                   xreg,yreg,ureg,sreg,*areg,*breg,ccreg);
+ if((ir&0xfe)==0x10) {
+   fprintf(tracefile,"%02x ",getMem(pc));
+ } else {
+   fprintf(tracefile,"   ");
+ }
+ fprintf(tracefile,"x=%04x y=%04x u=%04x s=%04x a=%02x b=%02x cc=%02x\n",
+	 xreg,yreg,ureg,sreg,*areg,*breg,ccreg);
 } 
  
-void read_image()
-{
- FILE *image;
- if((image=fopen("v09.rom","rb"))==NULL) 
-  if((image=fopen("../v09.rom","rb"))==NULL) 
-   if((image=fopen("..\\v09.rom","rb"))==NULL) {
-    perror("v09, image file");
-    exit(2);
- }
- if (fread(mem+0x8000,0x8000,1,image) != 1) {
-   perror("fread()");
-   exit(-1);
- }
- fclose(image);
-}
-
 void usage(void)
 {
  fprintf(stderr,"Usage: v09 [-t tracefile [-tl addr] "
@@ -101,16 +89,11 @@ int main(int argc,char *argv[])
      i++;
      escchar=strtol(argv[i],(char**)0,0);
    } else usage();
- }   
- #ifdef MSDOS
- if((mem=farmalloc(65535))==0) { 
-   fprintf(stderr,"Not enough memory\n");
-   exit(2);
- } 
- #endif
- read_image(); 
+ }
+ initMem();
+ read_image("v09.rom", 0x8000); 
  set_term(escchar);
- pcreg=(mem[0xfffe]<<8)+mem[0xffff]; 
+ pcreg=(getMem(0xfffe)<<8)+getMem(0xffff);
  interpr();
  return 0;
 }
