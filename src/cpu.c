@@ -215,8 +215,8 @@ char escchar;
     case 7: val=0xffff; break;					\
     case 8: val=iareg|0xff00; break;				\
     case 9: val=ibreg|0xff00; break;				\
-    case 10: val=iccreg|0xff00; break;				\
-    case 11: val=idpreg|0xff00; break;				\
+    case 10: val=iccreg|(iccreg<<8); break;	\
+    case 11: val=idpreg|(idpreg<<8); break;			\
     case 12: val=0xffff; break;					\
     case 13: val=0xffff; break;					\
     case 14: val=0xffff; break;					\
@@ -822,9 +822,6 @@ void interpr(void) {
 	Word t2;
 	GETREG(tw, tb >> 4);
 	GETREG(t2, tb & 15);
-	if ((tb & 0xF0) == 0xA0 || (tb & 0xF0) == 0xB0) { /* first op is CC or DP */
-	  tw = ((tw & 0xff) << 8) | (tw & 0xff); /* high and low byte the same */
-	}
 	SETREG(t2, tb >> 4);
 	SETREG(tw, tb & 15);
       }
@@ -832,9 +829,6 @@ void interpr(void) {
    case 0x1F: /* TFR */
      IMMBYTE(tb);
      GETREG(tw, tb >> 4);
-     if ((tb & 0xF0) == 0xA0 || (tb & 0xF0) == 0xB0) { /* source is CC or DP */
-       tw = ((tw & 0xff) << 8) | (tw & 0xff); /* high and low byte the same */
-     }
      SETREG(tw, tb & 15);
      break;
     case 0x20: /* (L)BRA*/
